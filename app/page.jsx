@@ -22,11 +22,19 @@ Alternatively, you can add Serverless Functions to any site regardless of framew
 And as always with dynamic content, beware of layout shifts & flicker! (here, we aren't...)
 `;
 
+function sleep(ms) {
+    return new Promise((resolve) =>
+        setTimeout(() => {
+            resolve(undefined)
+        }, ms)
+    )
+}
+
 function getCount() {
     return fetch('http://localhost:7100/', {
         cache: 'force-cache',
         next: { revalidate: 3600 },
-    }).then((r) => r.json())
+    }).then((r) => r.json()).catch(() => ({ c: '00' }))
 }
 
 function unstableGetCount() {
