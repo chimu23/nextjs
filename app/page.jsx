@@ -5,6 +5,9 @@ import { Markdown } from 'components/markdown';
 import { RandomQuote } from 'components/random-quote';
 import { getNetlifyContext } from 'utils';
 import { unstable_cache } from 'next/cache'
+import { getNextjsCount } from './api'
+import { UpdateRevalidateTag } from '../components/updateRevalidateTag'
+import { Suspense } from "react";
 
 const contextExplainer = `
 The card below is rendered on the server based on the value of \`process.env.CONTEXT\` 
@@ -22,36 +25,27 @@ Alternatively, you can add Serverless Functions to any site regardless of framew
 And as always with dynamic content, beware of layout shifts & flicker! (here, we aren't...)
 `;
 
-function sleep(ms) {
-    return new Promise((resolve) =>
-        setTimeout(() => {
-            resolve(undefined)
-        }, ms)
-    )
-}
-
-function getCount() {
-    return fetch('http://localhost:7100/', {
-        cache: 'force-cache',
-        next: { revalidate: 3600 },
-    }).then((r) => r.json()).catch(() => ({ c: '00' }))
-}
-
 function unstableGetCount() {
-    return unstable_cache(getCount, [])
+    return unstable_cache(getNextjsCount, [], { revalidate: 5, tags: ['count'] })
 }
 
 const ctx = getNetlifyContext();
 
 export default async function Page() {
-    const data = await unstableGetCount()()
-    console.log(data, 123)
+    const data2 = await unstableGetCount()()
     return (
         <div className="flex flex-col gap-12 sm:gap-16">
             <section>
                 <ContextAlert className="mb-6" />
                 <h1 className="mb-4">Netlify Platform Starter - Next.js</h1>
-                <p className="text-emerald-300 font-bold">Hello world=={data.c}</p>
+                {data2.code === 0 && (
+                    <p className="text-emerald-300 font-bold">
+                        这是从 nextjs action 获取的=={data2.data}
+                    </p>
+                )}
+                <Suspense fallback={<span>loading</span>}>
+                    <UpdateRevalidateTag></UpdateRevalidateTag>
+                </Suspense>
                 <p className="mb-6 text-lg">Get started with Next.js and Netlify in seconds.</p>
                 <Link href="https://docs.netlify.com/frameworks/next-js/overview/" className="btn btn-lg sm:min-w-64">
                     Read the Docs
